@@ -1,5 +1,8 @@
 # API Documentation
 
+> Instaclause Public API. This page documents the **`adminconsult`** source.
+> To push records already structured in Instaclause's own format, see **[Custom source →](./CUSTOM.md)**.
+
 Base URL: `http://app.instaclause.be/api/v1/adminconsult`
 
 ## Authentication
