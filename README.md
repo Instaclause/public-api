@@ -2,6 +2,12 @@
 
 > Instaclause Public API. This page documents the **`adminconsult`** source.
 > To push records already structured in Instaclause's own format, see **[Custom source →](./CUSTOM.md)**.
+>
+> Records posted through this API create customer entities in Instaclause — companies
+> (BV, CommV, NV, etc.) and persons (shareholders, directors, etc.). These entities are
+> stored in a separate collection that is **isolated per customer**, and they do not mix
+> with manually added CRM data or with other CRM integrations (HubSpot, Adminpulse,
+> FID-manager, Tess, Exact Online, etc.) that may be enabled in parallel in the same office.
 
 Base URL: `http://app.instaclause.be/api/v1/adminconsult`
 
