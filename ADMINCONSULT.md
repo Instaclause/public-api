@@ -14,7 +14,7 @@ Base URL: `https://app.instaclause.be/api/v1/adminconsult`
 
 Records posted through this API create customer entities in Instaclause — companies
 (BV, CommV, NV, etc.) and persons (shareholders, directors, etc.). These entities are
-stored in a separate collection that is **isolated per customer**, and they do not mix
+stored in a separate collection that is **isolated per office**, and they do not mix
 with manually added CRM data or with other CRM integrations (HubSpot, Adminpulse,
 FID-manager, Tess, Exact Online, etc.) that may be enabled in parallel in the same office.
 
@@ -119,62 +119,59 @@ write landed. Always create the customer first, then its addresses and links.
 - Headers:
   - Authorization: [API Key]
 - Body: the object for a single customer returned from AdminConsult API /customers
-  <details>
-    
-    <summary>Example</summary>
-
-  ```json
-    {
-      "AccCode": "string",
-      "AccountancySoftware": 0,
-      "AccountancySoftwareLabel": "string",
-      "CommercialName": "string",
-      "CompanyId": 0,
-      "CreationDate": "string",
-      "CupboardNumber": "string",
-      "Currency": "string",
-      "CustCode": "string",
-      "CustKind": "string",
-      "CustomerCrmType": 0,
-      "CustomerGroup": 0,
-      "CustomerGroupLabel": "string",
-      "CustomerId": 0,
-      "DateOfBirth": "string",
-      "DisabledDate": "string",
-      "Distance": 0,
-      "Email": "string",
-      "Fax": "string",
-      "Firstname": "string",
-      "Holding": 0,
-      "Homepage": "string",
-      "IsActive": true,
-      "IsCompany": true,
-      "Language": "string",
-      "Mobile": "string",
-      "NaceCode": "string",
-      "Name": "string",
-      "Nationality": "string",
-      "Newsletter": true,
-      "Phone": "string",
-      "Phone2": "string",
-      "PlaceOfBirth": "string",
-      "ReasonForLeaving": 0,
-      "RegistrationNr": "string",
-      "Remarks": "string",
-      "RPR": "string",
-      "Sector": "string",
-      "SectorId": 0,
-      "Sex": "string",
-      "SocialSecurityNumber": "string",
-      "Title": "string",
-      "VATNr": "string"
-    }
-  ```
-
-  </details>
 - Response
   - Success Status Code: 201 Created
-  
+
+Forward AdminConsult's own customer object as-is. These are the fields it is read for:
+
+```json
+{
+  "AccCode": "string",
+  "AccountancySoftware": 0,
+  "AccountancySoftwareLabel": "string",
+  "CommercialName": "string",
+  "CompanyId": 0,
+  "CreationDate": "string",
+  "CupboardNumber": "string",
+  "Currency": "string",
+  "CustCode": "string",
+  "CustKind": "string",
+  "CustomerCrmType": 0,
+  "CustomerGroup": 0,
+  "CustomerGroupLabel": "string",
+  "CustomerId": 0,
+  "DateOfBirth": "string",
+  "DisabledDate": "string",
+  "Distance": 0,
+  "Email": "string",
+  "Fax": "string",
+  "Firstname": "string",
+  "Holding": 0,
+  "Homepage": "string",
+  "IsActive": true,
+  "IsCompany": true,
+  "Language": "string",
+  "Mobile": "string",
+  "NaceCode": "string",
+  "Name": "string",
+  "Nationality": "string",
+  "Newsletter": true,
+  "Phone": "string",
+  "Phone2": "string",
+  "PlaceOfBirth": "string",
+  "ReasonForLeaving": 0,
+  "RegistrationNr": "string",
+  "Remarks": "string",
+  "RPR": "string",
+  "Sector": "string",
+  "SectorId": 0,
+  "Sex": "string",
+  "SocialSecurityNumber": "string",
+  "Title": "string",
+  "VATNr": "string"
+}
+```
+
 ### /customers/{customerId}/addresses
 
 - Method: POST

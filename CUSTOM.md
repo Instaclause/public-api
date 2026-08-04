@@ -232,7 +232,7 @@ Alternatively, if the related person was already pushed as its own record, you m
 
 Embedding is the more robust option: it does not depend on push ordering.
 
-### Examples
+## Examples
 
 The **smallest record that works** — everything else is optional:
 
@@ -243,8 +243,7 @@ The **smallest record that works** — everything else is optional:
 Populate more than this, though: the picker searches on `name` / `firstName` / `lastName`,
 and any field you leave out is a field the user has to type into the contract by hand.
 
-<details>
-  <summary>Example — Person (fully populated)</summary>
+### A person
 
 ```json
 {
@@ -264,10 +263,7 @@ and any field you leave out is a field the user has to type into the contract by
 }
 ```
 
-</details>
-
-<details>
-  <summary>Example — Company (with representative + shareholder)</summary>
+### A company, with a representative and a shareholder
 
 ```json
 {
@@ -305,10 +301,13 @@ and any field you leave out is a field the user has to type into the contract by
 }
 ```
 
-</details>
+Note that `Jan Peeters` appears twice here — once as a representative, once as a
+shareholder — and that both copies carry only the identifying fields. That is all a child
+keeps; see [Fields that survive](#fields-that-survive-on-relations-and-shareholders).
 
-<details>
-  <summary>Example — Batch (array)</summary>
+### A batch — several records in one call
+
+Send an array to push many records at once. This is the normal shape for a daily sync.
 
 ```json
 [
@@ -330,8 +329,6 @@ and any field you leave out is a field the user has to type into the contract by
   }
 ]
 ```
-
-</details>
 
 ---
 
