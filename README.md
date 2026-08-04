@@ -11,6 +11,7 @@ in the same office.
   <a href="./ADMINCONSULT.md"><strong>AdminConsult guide</strong></a> ·
   <a href="./CUSTOM.md"><strong>Custom guide</strong></a> ·
   <a href="#-two-ways-in--pick-one-before-you-write-any-code">Which one do I need?</a> ·
+  <a href="#-test-account">Test account</a> ·
   <a href="#-authentication">Authentication</a>
 </p>
 
@@ -69,6 +70,19 @@ For **everything else**: your own CRM, an in-house system, or another vendor.
 | **Turned on via** | *AdminConsult & AdminIS* toggle | *Custom APIs* toggle |
 | **Scheduled pull to disable first** | Yes | Not applicable |
 | **API key** | The same key — see below | The same key — see below |
+
+---
+
+<br>
+
+## 🧪 Test account
+
+You do not have to build against a live office. **Request a test account by emailing
+[support@instaclause.com](mailto:support@instaclause.com)** and you can develop and test
+your integration without touching real client data.
+
+Mention which source you are integrating — `adminconsult` or `custom` — so the account is
+set up with the right integration switched on.
 
 ---
 
