@@ -1,11 +1,20 @@
 # Instaclause Public API
 
 Push your client data into Instaclause so users can select it as a contract party instead
-of typing it in by hand. Records posted through the API create customer entities — companies
-(BV, CommV, NV, etc.) and persons (shareholders, directors, etc.) — stored in a collection
-that is **isolated per customer**. They do not mix with manually added CRM data, or with
-other CRM integrations (HubSpot, Adminpulse, FID-manager, Tess, Exact Online, etc.) that
-may be enabled in parallel in the same office.
+of typing it in by hand. Records posted through the API create companies (BV, CommV, NV,
+etc.) and persons (shareholders, directors, etc.), stored in a collection that is **isolated
+per office**. They do not mix with manually added CRM data, or with other CRM integrations
+(HubSpot, Adminpulse, FID-manager, Tess, Exact Online, etc.) that may be enabled in parallel
+in the same office.
+
+### Terms used in these docs
+
+| Term | Means |
+|---|---|
+| **office** | The accountancy firm using Instaclause. An API key belongs to exactly one office. |
+| **client** / **customer** | A record you push — a company or a person. |
+| **party** | A client once it has been selected into a contract. |
+| **source** | `adminconsult` or `custom` — the URL segment that picks which API you are using. |
 
 ---
 
@@ -82,14 +91,9 @@ Go to the [Instaclause Settings Page](https://app.instaclause.be/accountant/sett
 | Custom APIs enabled **and** switched on | Inside the **Custom APIs** block |
 | Custom APIs enabled but switched off | Not shown anywhere — switch the toggle on to reveal it |
 
-So a plain AdminConsult office finds the key under **Credentials**, with no Custom APIs
-involvement. An office using the Custom API switches the toggle on:
-
-![Custom APIs toggle in the Instaclause settings page](./docs/images/custom-api-toggle.png)
-
-and the key appears in the same block, with **Copy** and **Refresh**:
-
-![The API Key panel with Copy and Refresh buttons](./docs/images/custom-api-key.png)
+**Step-by-step, with screenshots, is in the guide you need:**
+[Custom](./CUSTOM.md#getting-your-api-key) ·
+[AdminConsult](./ADMINCONSULT.md#getting-your-api-key)
 
 ### About the key
 

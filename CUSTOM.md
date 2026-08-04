@@ -13,25 +13,100 @@ Base URL: `https://app.instaclause.be/api/v1/custom`
 
 ---
 
+## Quickstart
+
+Four steps to your first record. Each one is explained in full further down.
+
+**1. Switch the API on.** In Instaclause, go to **Settings → Integration Settings** and
+turn on the **Custom APIs** toggle.
+
+**2. Copy the API key.** It appears in the same block.
+
+**3. Push a record.**
+
+```bash
+curl -X POST 'https://app.instaclause.be/api/v1/custom/customers' \
+  -H "Authorization: $INSTACLAUSE_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"id":"P-1001","type":"person","firstName":"Jan","lastName":"Peeters"}'
+```
+
+You get back:
+
+```json
+{ "response": "OK", "count": 1 }
+```
+
+**4. Check it landed.** Draft a contract, go to the **add party** step and press
+**Custom** — `Jan Peeters` is in the list.
+
+That is the whole loop. Everything else in this guide is about the shape of the records
+and the rules that apply once you are pushing real data.
+
+---
+
 ## How it works
+
+```
+  Your CRM                    Instaclause                     The user
+  ────────                    ───────────                     ────────
+
+  ┌──────────┐   POST        ┌──────────────────┐      ┌──────────────────┐
+  │  client  │ ────────────▶ │  stored per      │ ───▶ │  "Add party"  →  │
+  │  records │  /customers   │  office          │      │  Custom → picker │
+  └──────────┘               └──────────────────┘      └──────────────────┘
+   you map to                 overwritten by id         normalised into
+   the Party schema           isolated per office        contract fields
+```
 
 1. **The office enables Custom APIs and copies its API key** from the Instaclause settings page.
 2. **Your system pushes client records** to `POST /customers` — one record or an array. Each record needs an `id`.
 3. **Instaclause stores them per office**, isolated from manually added parties and from other CRM integrations (HubSpot, AdminPulse, FID-manager, Tess, Exact Online, …) that may run in parallel in the same office.
-4. **The user picks them when drafting a contract.** In the "add party" step a **Custom** import button appears, opening a searchable list of the records you pushed. On selection, the record is converted into contract fields.
+4. **The user picks them when drafting a contract.** In the **add party** step a **Custom** import button appears, opening a searchable list of the records you pushed. On selection, the record is converted into contract fields.
 
 > **The data format is Instaclause's, not yours.** Records must be shaped like an Instaclause party (`type`, `name`, `companyType`, address fields, `relations`, `shareholders`, …). Mapping your CRM's model onto this schema is the integration work, and it sits on your side. The [Party schema](#party-schema) below is the contract.
 
 ---
 
+## Getting your API key
+
+The Custom API is **off by default**. The office must switch it on before the key appears
+and before any request is accepted.
+
+**1.** Open the [Instaclause Settings Page](https://app.instaclause.be/accountant/settings)
+and go to **Integration Settings**.
+
+**2.** Switch the **Custom APIs** toggle on.
+
+![Custom APIs toggle in the Instaclause settings page](./docs/images/custom-api-toggle.png)
+
+**3.** The key appears in the same block. Press **Copy**.
+
+![The API Key panel with Copy and Refresh buttons](./docs/images/custom-api-key.png)
+
+### What you now have
+
+- **One key for the whole office.** It is not per user and not per integration — the same
+  key also authenticates the `adminconsult` source, since the source is only a URL segment.
+- **It does not expire.** It stays valid until someone presses Refresh.
+- **You can come back for it.** Re-opening the page shows the *same* key, so this is not a
+  one-time reveal.
+- **It is long** — a few hundred characters. Make sure whatever stores it does not truncate it.
+
+Treat it like a password: keep it in your secret manager, never commit it, never put it in
+a URL.
+
+> ⚠️ **Refresh breaks running integrations immediately.** There is no grace period. The
+> moment anyone in the office presses **Refresh**, every previously issued key stops working
+> and your sync fails until the new key is handed over. That is why the button asks for
+> confirmation — and it is the most common cause of a sync that "suddenly broke".
+
+If an office cannot find the key at all, the display location depends on their setup —
+see [the README](./README.md#getting-the-key) for all three cases.
+
+---
+
 ## Authentication
-
-The Custom API is off by default: the office must switch the **Custom APIs** toggle on under
-**Settings → Integration Settings** before the key appears and before requests are accepted.
-
-There is one key per office and it does not expire. **See
-[Authentication in the README](./README.md#authentication) for how to obtain it, where it
-appears in the settings page, and what the Refresh button does to keys already in use.**
 
 Send the key as the **raw value** of the `Authorization` header — no `Bearer` prefix.
 
@@ -46,21 +121,10 @@ A request fails with **`401 Unauthorized`** — before anything is written — i
 - the key has been superseded by a **Refresh** on the office's settings page;
 - **Custom APIs** is switched off for that office.
 
-If a sync that used to work starts failing wholesale, the last two are almost always the cause: check the toggle first, then ask the office whether anyone pressed Refresh.
+If a sync that used to work starts failing wholesale, the last two are almost always the
+cause: check the toggle first, then ask the office whether anyone pressed Refresh.
 
 > ⚠️ **The `custom` segment in the URL is case-sensitive.** Use `/api/v1/custom/...` exactly, in lowercase. A capitalised variant is still accepted by authentication and can return `201 Created` while the data goes nowhere — you would see successful responses and an empty picker.
-
-<details>
-  <summary>Example — curl</summary>
-
-```bash
-curl -X POST 'https://app.instaclause.be/api/v1/custom/customers' \
-  -H "Authorization: $INSTACLAUSE_API_KEY" \
-  -H 'Content-Type: application/json' \
-  -d '[{"id":"P-1001","type":"person","firstName":"Jan","lastName":"Peeters"}]'
-```
-
-</details>
 
 ---
 
@@ -108,6 +172,30 @@ Records cannot be removed through the API. A client that leaves the office stays
 
 ## Party schema
 
+```
+Party  — the top-level record you POST
+│
+├── type: "person"
+│     id (required)
+│     firstName, lastName, initials
+│     documentNumber, placeOfBirth, dateOfBirth
+│     street, number, zipCode, city, businessNumber, email
+│
+└── type: "company"
+      id (required)
+      name, companyType, jurisdiction, representedBy, website
+      street, number, zipCode, city, businessNumber, email
+      │
+      ├── relations[]      + function
+      └── shareholders[]   + numberOfShares, numberOfVotes
+            │
+            └── ⚠ children keep ONLY these fields:
+                  person  → id, firstName, initials, lastName
+                  company → id, name, companyType, representedBy
+                Everything else on a child (address, email,
+                dateOfBirth, businessNumber) is silently dropped.
+```
+
 `type`: `"person"` or `"company"`.
 
 Common fields: `id` (required), `street`, `number`, `zipCode`, `city`, `businessNumber`, `email`.
@@ -144,8 +232,19 @@ Alternatively, if the related person was already pushed as its own record, you m
 
 Embedding is the more robust option: it does not depend on push ordering.
 
+### Examples
+
+The **smallest record that works** — everything else is optional:
+
+```json
+{ "id": "P-1001", "type": "person", "firstName": "Jan", "lastName": "Peeters" }
+```
+
+Populate more than this, though: the picker searches on `name` / `firstName` / `lastName`,
+and any field you leave out is a field the user has to type into the contract by hand.
+
 <details>
-  <summary>Example — Person</summary>
+  <summary>Example — Person (fully populated)</summary>
 
 ```json
 {
@@ -257,8 +356,8 @@ You do not need to pre-format for the contract's language or layout. On selectio
 
 ## FAQ
 
-### How do you differentiate between clients if data is uploaded from multiple locations? Does each client get a unique API key?
-Each office has its own unique API key, which identifies the office and authenticates the request. Data pushed with one office's key is only ever visible in that office.
+### Does each office get its own API key?
+Yes. Each office has its own unique API key, which identifies the office and authenticates the request. Data pushed with one office's key is only ever visible in that office — which is what keeps offices apart when one application uploads on behalf of several of them.
 
 ### How often should I sync?
 Once a day is sufficient. After the initial upload you can post only the records that changed — but each one must be sent **complete**, since a re-post replaces the stored record rather than merging into it.

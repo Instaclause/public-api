@@ -23,8 +23,21 @@ FID-manager, Tess, Exact Online, etc.) that may be enabled in parallel in the sa
 ## Before you start — turn off the scheduled pull
 
 Instaclause can also **pull** from AdminConsult on a nightly schedule. That pull writes to
-the same records as this API, matched on the same `id`. If it stays switched on, the
-nightly sync will overwrite whatever you push.
+the same records as this API, matched on the same `id` — so if it stays switched on, it
+overwrites whatever you push, every night.
+
+```
+  UNTICKED — the pull competes with your push:
+
+    AdminConsult ──── nightly pull ─────┐
+                                        ├──▶  same records, matched by id
+    You ──────────── POST /customers ───┘     ⚠ the pull wins overnight
+
+  TICKED — push-only:
+
+    AdminConsult      (scheduled pull off)
+    You ──────────── POST /customers ───────▶  records stay as you pushed them
+```
 
 Before pushing anything, the office must tick **Disable data fetching** on the
 **AdminConsult & AdminIS** integration under **Integration Settings**.
@@ -38,6 +51,34 @@ Before pushing anything, the office must tick **Disable data fetching** on the
 
 ---
 
+## Getting your API key
+
+Open the [Instaclause Settings Page](https://app.instaclause.be/accountant/settings) and go
+to **Integration Settings**. For an office using AdminConsult, the key sits under its own
+**Credentials** heading — there is no Custom APIs involvement.
+
+### What you now have
+
+- **One key for the whole office.** It is not per user and not per integration — the same
+  key also authenticates the `custom` source, since the source is only a URL segment.
+- **It does not expire.** It stays valid until someone presses Refresh.
+- **You can come back for it.** Re-opening the page shows the *same* key, so this is not a
+  one-time reveal.
+- **It is long** — a few hundred characters. Make sure whatever stores it does not truncate it.
+
+Treat it like a password: keep it in your secret manager, never commit it, never put it in
+a URL.
+
+> ⚠️ **Refresh breaks running integrations immediately.** There is no grace period. The
+> moment anyone in the office presses **Refresh**, every previously issued key stops working
+> and your sync fails until the new key is handed over. That is why the button asks for
+> confirmation — and it is the most common cause of a sync that "suddenly broke".
+
+If the key is not under **Credentials**, the office has Custom APIs enabled and it has moved
+— see [the README](./README.md#getting-the-key) for all three cases.
+
+---
+
 ## Authentication
 
 Include the API key in the `Authorization` header of every request, as the **raw value** —
@@ -46,10 +87,6 @@ no `Bearer` prefix.
 ```
 Authorization: <your API key>
 ```
-
-There is one key per office and it does not expire. **See
-[Authentication in the README](./README.md#authentication) for how to obtain it, where it
-appears in the settings page, and what the Refresh button does to keys already in use.**
 
 A request fails with `401 Unauthorized` if the header is missing, the key is malformed or
 not one Instaclause issued, the key has been superseded by a **Refresh**, or the Public API
@@ -61,11 +98,19 @@ is switched off for that office.
 
 ## Routes
 
-> **Order matters: post the customer before its sub-resources.** `/addresses` and
-> `/customerlinkcustomer` attach to a customer that must already exist. A sub-route call
-> for a customer that has not been posted yet still answers `201 Created`, but nothing is
-> stored — so a `201` on these two routes is not on its own proof that the write landed.
-> Always create the customer first, then its addresses and links.
+**Order matters: post the customer before its sub-resources.**
+
+```
+  1. POST /customers                                  ← must land first
+       │
+       ├── 2. POST /customers/{id}/addresses
+       └── 3. POST /customers/{id}/customerlinkcustomer
+```
+
+`/addresses` and `/customerlinkcustomer` attach to a customer that must already exist. A
+sub-route call for a customer that has not been posted yet **still answers `201 Created`,
+but stores nothing** — so a `201` on these two routes is not on its own proof that the
+write landed. Always create the customer first, then its addresses and links.
 
 ### /customers
 
@@ -154,17 +199,17 @@ is switched off for that office.
 
 ## FAQ
 
-### How do you differentiate between clients if that application is going to upload to Instaclause from multiple locations? Does each client get a unique API key?
-Each office has its own unique API key, which identifies the office and authenticates the request.
+### Does each office get its own API key?
+Yes. Each office has its own unique API key, which identifies the office and authenticates the request. This is what keeps offices apart when one application uploads on behalf of several of them.
 
-### Frequency of sync once a day sufficient?
+### Is syncing once a day enough?
 Yes.
 
-### After the initial upload, should only the clients with changes be posted? Or a full run with all data each time (for customeraddress and customerlinkcustomer)?
-For /customers/{customerId}/addresses and /customers/{customerId}/customerlinkcustomer requests the full list must be posted.
+### Do I re-post everything, or only what changed?
+For `/customers`, only the customers that changed. For `/customers/{customerId}/addresses` and `/customers/{customerId}/customerlinkcustomer`, always post the **full list**.
 
-### Does this also apply to the customers-call which returns a List? (So always the complete list or only the customers containing changes)?
-For requests to /customers, it's possible to only post customers with changes. This will overwrite the customer data, therefore all adresses and customerlinkcustomer needs to be posted again.
+### If I re-post a customer, do I have to re-post its addresses and links too?
+Yes. Posting to `/customers` overwrites the customer data, which means all addresses and `customerlinkcustomer` entries must be posted again afterwards.
 
 ### Can I delete a customer?
 No. There is no DELETE route, so a client pushed once cannot be removed through the API — it stays available in the party picker. Decide up front how your sync should handle clients that leave the office.
