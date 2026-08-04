@@ -1,19 +1,72 @@
-# API Documentation — Custom source
+# Custom API — push CRM data to Instaclause
 
-> Part of the [Instaclause Public API](./README.md). This page documents the **`custom`** source, used to push records that are already structured in Instaclause's own format. For the AdminConsult integration, see the [main README](./README.md).
+One of the [two ways into Instaclause](./README.md). This page documents the **`custom`** source.
+
+> ✅ **You are in the right place if** your client data comes from your own CRM, an in-house
+> system, or any vendor that is not AdminConsult. You will map your records onto
+> Instaclause's Party schema and push them here.
+>
+> ↩️ **Relaying AdminConsult / AdminIS data instead?** That is the other API —
+> see the **[main README](./README.md)**. Different payload, different routes, different setup.
 
 Base URL: `https://app.instaclause.be/api/v1/custom`
 
+---
+
+## How it works
+
+1. **The office enables Custom APIs and copies its API key** from the Instaclause settings page.
+2. **Your system pushes client records** to `POST /customers` — one record or an array. Each record needs an `id`.
+3. **Instaclause stores them per office**, isolated from manually added parties and from other CRM integrations (HubSpot, AdminPulse, FID-manager, Tess, Exact Online, …) that may run in parallel in the same office.
+4. **The user picks them when drafting a contract.** In the "add party" step a **Custom** import button appears, opening a searchable list of the records you pushed. On selection, the record is converted into contract fields.
+
+> **The data format is Instaclause's, not yours.** Records must be shaped like an Instaclause party (`type`, `name`, `companyType`, address fields, `relations`, `shareholders`, …). Mapping your CRM's model onto this schema is the integration work, and it sits on your side. The [Party schema](#party-schema) below is the contract.
+
+---
+
 ## Authentication
 
-### API Key
+The Custom API is off by default: the office must switch the **Custom APIs** toggle on under
+**Settings → Integration Settings** before the key appears and before requests are accepted.
 
-This API uses API keys to authenticate requests. You must include your API key in the `Authorization` header of each request, as the **raw value** (no `Bearer` prefix). To obtain an API key, access the [Instaclause Settings Page](https://app.instaclause.be/accountant/settings).
-Each office gets a unique API key, which identifies the office and authorizes the requests.
+There is one key per office and it does not expire. **See
+[Authentication in the README](./README.md#authentication) for how to obtain it, where it
+appears in the settings page, and what the Refresh button does to keys already in use.**
+
+Send the key as the **raw value** of the `Authorization` header — no `Bearer` prefix.
+
+```
+Authorization: <your API key>
+Content-Type: application/json
+```
+
+A request fails with **`401 Unauthorized`** — before anything is written — if:
+
+- the header is missing, or the key is malformed, altered, or not one Instaclause issued;
+- the key has been superseded by a **Refresh** on the office's settings page;
+- **Custom APIs** is switched off for that office.
+
+If a sync that used to work starts failing wholesale, the last two are almost always the cause: check the toggle first, then ask the office whether anyone pressed Refresh.
+
+> ⚠️ **The `custom` segment in the URL is case-sensitive.** Use `/api/v1/custom/...` exactly, in lowercase. A capitalised variant is still accepted by authentication and can return `201 Created` while the data goes nowhere — you would see successful responses and an empty picker.
+
+<details>
+  <summary>Example — curl</summary>
+
+```bash
+curl -X POST 'https://app.instaclause.be/api/v1/custom/customers' \
+  -H "Authorization: $INSTACLAUSE_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '[{"id":"P-1001","type":"person","firstName":"Jan","lastName":"Peeters"}]'
+```
+
+</details>
+
+---
 
 ## Routes
 
-### /customers
+### POST /customers
 
 - Method: POST
 - Endpoint: `/customers`
@@ -25,9 +78,35 @@ Each office gets a unique API key, which identifies the office and authorizes th
   - Success Status Code: `201 Created`
   - Body: `{ "response": "OK", "count": <number of records> }`
 
-Each record **must** include an `id` (used as the unique identifier; `CustomerId` is also accepted). Posting a record with an existing `id` overwrites it.
+Each record **must** include an `id` (used as the unique identifier; `CustomerId` is also accepted).
 
-#### Party schema
+> ⚠️ **A re-post is a full replace, not a merge.** The stored record is overwritten wholesale by what you send. If you omit a field you sent last time, it is **erased** — not left in place. Incremental syncs must send each changed record in full, not just the changed fields.
+
+**Validation is all-or-nothing.** If any record in the array is missing an `id`, the entire request fails with `400` and **nothing is written** — you will never get a partial batch. Fix the offending record and re-post the whole chunk.
+
+Large arrays are fine: the server writes them in batches internally, so 500–2000 records per request is a comfortable size.
+
+### GET /customers
+
+- Method: GET
+- Endpoint: `/customers?id={id}`
+- Headers:
+  - `Authorization`: [API Key]
+- Response
+  - `200 OK` → `{ "response": { ...the stored record... } }`
+  - `404 Not Found` if the `id` does not exist.
+
+Use this to verify what actually landed after a push.
+
+> **The returned record does not contain `id`.** The identifier is the document key, and it is stripped from the stored body on write. A naive round-trip diff of "what I sent" vs "what I get back" will therefore always show `id` as missing — exclude it from the comparison.
+
+### There is no DELETE route
+
+Records cannot be removed through the API. A client that leaves the office stays in the party picker indefinitely unless someone removes it another way. If your CRM has a concept of archived or departed clients, decide up front how you want them to appear — a common approach is to stop re-posting them and accept they linger, or to mark them in the `name` so users can see the status in the picker.
+
+---
+
+## Party schema
 
 `type`: `"person"` or `"company"`.
 
@@ -35,12 +114,35 @@ Common fields: `id` (required), `street`, `number`, `zipCode`, `city`, `business
 
 **Person** also has: `firstName`, `lastName`, `initials` (optional), `documentNumber`, `placeOfBirth`, `dateOfBirth` (format `DD/MM/YYYY`).
 
-**Company** also has: `name`, `companyType`, `jurisdiction`, `website` (optional), `relations` (optional), `shareholders` (optional).
+**Company** also has: `name`, `companyType`, `jurisdiction`, `representedBy` (optional), `website` (optional), `relations` (optional), `shareholders` (optional).
 - `companyType` ∈ `BV, NV, CV, CommV, VOF, VZW, Stichting, SRL, SA, SC, SComm, SNC, ASBL, Fondation, Vereniging`.
-- `relations[]` — the company's representatives. Each is a Party (`person` or `company`) plus a `function` (e.g. `"Bestuurder"`).
-- `shareholders[]` — each is a Party plus `numberOfShares` and `numberOfVotes`.
+- `relations[]` — the company's representatives. Each carries a `function` (e.g. `"Bestuurder"`).
+- `shareholders[]` — each carries `numberOfShares` and `numberOfVotes`.
 
-Representatives and shareholders are **embedded** in the company object — there are no sub-routes to call (the payload is self-contained).
+#### Fields that survive on `relations` and `shareholders`
+
+Embedded children are **not** full Party objects. Only these fields are read; everything else you send on a child — address, `email`, `businessNumber`, `dateOfBirth` — is silently dropped.
+
+| Child `type` | Fields kept |
+|---|---|
+| `person` | `id`, `firstName`, `initials`, `lastName` |
+| `company` | `id`, `name`, `companyType`, `representedBy` |
+
+Plus `function` on a relation, and `numberOfShares` / `numberOfVotes` on a shareholder.
+
+If you need the full detail of a representative — their address, email, date of birth — push them as their own top-level record too. The two are independent: the embedded child drives how the company is represented in the contract, the top-level record makes that person selectable as a party in their own right.
+
+#### Referencing instead of embedding
+
+Representatives and shareholders are **embedded** in the company object: the payload is self-contained, so you never need follow-up calls. For the `custom` source there are no sub-routes at all — `POST /customers/{id}/{anything}` returns `400 Bad Request`. (The AdminConsult source does have sub-routes; that difference is the reason this is worth stating.)
+
+Alternatively, if the related person was already pushed as its own record, you may reference it by `id` alone and Instaclause resolves it on selection:
+
+```json
+"relations": [{ "id": "P-1001", "function": "Bestuurder" }]
+```
+
+Embedding is the more robust option: it does not depend on push ordering.
 
 <details>
   <summary>Example — Person</summary>
@@ -132,30 +234,52 @@ Representatives and shareholders are **embedded** in the company object — ther
 
 </details>
 
-### /customers (read back)
+---
 
-- Method: GET
-- Endpoint: `/customers?id={id}`
-- Headers:
-  - `Authorization`: [API Key]
-- Response
-  - `200 OK` → `{ "response": { ...the stored record... } }`
-  - `404 Not Found` if the `id` does not exist.
+## What Instaclause does with the record
+
+You do not need to pre-format for the contract's language or layout. On selection, Instaclause normalises the record:
+
+- **Company type is localised to the contract language** — `BV ↔ SRL`, `NV ↔ SA`, and so on. Push the form you have; the contract renders the right one.
+- **Birth dates are reformatted** to the convention of the contract language.
+- **Representatives and shareholders are resolved**, either from the embedded objects or by `id` lookup against records you pushed earlier.
+- **The picker list is built from a lightweight index** (`type`, `name`, `firstName`, `lastName`, `id`), which keeps it fast on large datasets. Make sure those fields are populated: a record with a blank `name` / `lastName` is hard for the user to find, even though the rest of the record is stored correctly.
+
+---
 
 ## Limits
 
-- Maximum request size is ~10 MB and the default timeout is 60s. For large datasets, send the records in chunks (e.g. **500–2000 records per request**) — the endpoint accepts arrays, so just repeat the call per chunk.
+- **Request size:** ~10 MB. **Timeout:** 60s.
+- For large datasets, send the records in chunks of **500–2000 per request** and repeat the call per chunk. The server writes each request in internal batches, so array size is limited by the request ceiling above rather than by a record count.
+- There is no documented rate limit, but a daily sync running chunks sequentially is the intended usage pattern.
+
+---
 
 ## FAQ
 
 ### How do you differentiate between clients if data is uploaded from multiple locations? Does each client get a unique API key?
-Each office has its own unique API key, which identifies the office and authenticates the request.
+Each office has its own unique API key, which identifies the office and authenticates the request. Data pushed with one office's key is only ever visible in that office.
 
 ### How often should I sync?
-Once a day is sufficient. After the initial upload you can post only the records that changed — a record is overwritten by its `id`.
+Once a day is sufficient. After the initial upload you can post only the records that changed — but each one must be sent **complete**, since a re-post replaces the stored record rather than merging into it.
+
+### Why did a field disappear after my last sync?
+Almost certainly the full-replace behaviour: the record was re-posted without that field, so it was erased. Send the whole record every time.
+
+### I sent an address on a representative and it vanished. Why?
+Embedded `relations` and `shareholders` keep only the identifying fields — see [Fields that survive](#fields-that-survive-on-relations-and-shareholders). To carry an address, email or date of birth for that person, push them as their own top-level record as well.
 
 ### Do I need to post representatives and shareholders separately?
-No. Embed them in the company's `relations` and `shareholders` arrays. The Custom payload is self-contained, so there are no sub-routes (unlike the AdminConsult source).
+No. Embed them in the company's `relations` and `shareholders` arrays. The Custom payload is self-contained, so a single `POST /customers` is all you need — unlike the AdminConsult source, which requires separate calls for addresses and links.
 
 ### What date format should I use for `dateOfBirth`?
 `DD/MM/YYYY` (ISO `YYYY-MM-DD` is also accepted).
+
+### Can I delete a record?
+No — [there is no DELETE route](#there-is-no-delete-route). Records can only be replaced by re-posting the same `id`. Plan your handling of departed clients around that.
+
+### The office pressed Refresh and our sync broke. What now?
+That is expected — Refresh invalidates every previously issued key immediately. Ask the office to copy the new key from **Settings → Custom APIs** and update it in your configuration.
+
+### Can I get a read-only or per-environment key?
+Not currently. One key per office, read + write, no expiry.
