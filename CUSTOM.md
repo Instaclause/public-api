@@ -11,9 +11,22 @@ One of the [two ways into Instaclause](./README.md). This page documents the **`
 
 Base URL: `https://app.instaclause.be/api/v1/custom`
 
+<p align="center">
+  <a href="#-quickstart">Quickstart</a> ·
+  <a href="#-getting-your-api-key">API key</a> ·
+  <a href="#-authentication">Authentication</a> ·
+  <a href="#-routes">Routes</a> ·
+  <a href="#-party-schema">Party schema</a> ·
+  <a href="#-examples">Examples</a> ·
+  <a href="#-limits">Limits</a> ·
+  <a href="#-faq">FAQ</a>
+</p>
+
 ---
 
-## Quickstart
+<br>
+
+## 🚀 Quickstart
 
 Four steps to your first record. Each one is explained in full further down.
 
@@ -45,7 +58,9 @@ and the rules that apply once you are pushing real data.
 
 ---
 
-## How it works
+<br>
+
+## ⚙️ How it works
 
 ```
   Your CRM                    Instaclause                     The user
@@ -64,11 +79,13 @@ and the rules that apply once you are pushing real data.
 3. **Instaclause stores them per office**, isolated from manually added parties and from other CRM integrations (HubSpot, AdminPulse, FID-manager, Tess, Exact Online, …) that may run in parallel in the same office.
 4. **The user picks them when drafting a contract.** In the **add party** step a **Custom** import button appears, opening a searchable list of the records you pushed. On selection, the record is converted into contract fields.
 
-> **The data format is Instaclause's, not yours.** Records must be shaped like an Instaclause party (`type`, `name`, `companyType`, address fields, `relations`, `shareholders`, …). Mapping your CRM's model onto this schema is the integration work, and it sits on your side. The [Party schema](#party-schema) below is the contract.
+> **The data format is Instaclause's, not yours.** Records must be shaped like an Instaclause party (`type`, `name`, `companyType`, address fields, `relations`, `shareholders`, …). Mapping your CRM's model onto this schema is the integration work, and it sits on your side. The [Party schema](#-party-schema) below is the contract.
 
 ---
 
-## Getting your API key
+<br>
+
+## 🔑 Getting your API key
 
 The Custom API is **off by default**. The office must switch it on before the key appears
 and before any request is accepted.
@@ -106,7 +123,9 @@ see [the README](./README.md#getting-the-key) for all three cases.
 
 ---
 
-## Authentication
+<br>
+
+## 🛡️ Authentication
 
 Send the key as the **raw value** of the `Authorization` header — no `Bearer` prefix.
 
@@ -128,7 +147,9 @@ cause: check the toggle first, then ask the office whether anyone pressed Refres
 
 ---
 
-## Routes
+<br>
+
+## 🛣️ Routes
 
 ### POST /customers
 
@@ -170,7 +191,9 @@ Records cannot be removed through the API. A client that leaves the office stays
 
 ---
 
-## Party schema
+<br>
+
+## 🧱 Party schema
 
 ```
 Party  — the top-level record you POST
@@ -232,7 +255,11 @@ Alternatively, if the related person was already pushed as its own record, you m
 
 Embedding is the more robust option: it does not depend on push ordering.
 
-## Examples
+---
+
+<br>
+
+## 📦 Examples
 
 The **smallest record that works** — everything else is optional:
 
@@ -332,7 +359,9 @@ Send an array to push many records at once. This is the normal shape for a daily
 
 ---
 
-## What Instaclause does with the record
+<br>
+
+## ✨ What Instaclause does with the record
 
 You do not need to pre-format for the contract's language or layout. On selection, Instaclause normalises the record:
 
@@ -343,7 +372,9 @@ You do not need to pre-format for the contract's language or layout. On selectio
 
 ---
 
-## Limits
+<br>
+
+## 📏 Limits
 
 - **Request size:** ~10 MB. **Timeout:** 60s.
 - For large datasets, send the records in chunks of **500–2000 per request** and repeat the call per chunk. The server writes each request in internal batches, so array size is limited by the request ceiling above rather than by a record count.
@@ -351,7 +382,9 @@ You do not need to pre-format for the contract's language or layout. On selectio
 
 ---
 
-## FAQ
+<br>
+
+## ❓ FAQ
 
 ### Does each office get its own API key?
 Yes. Each office has its own unique API key, which identifies the office and authenticates the request. Data pushed with one office's key is only ever visible in that office — which is what keeps offices apart when one application uploads on behalf of several of them.

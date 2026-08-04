@@ -7,6 +7,13 @@ per office**. They do not mix with manually added CRM data, or with other CRM in
 (HubSpot, Adminpulse, FID-manager, Tess, Exact Online, etc.) that may be enabled in parallel
 in the same office.
 
+<p align="center">
+  <a href="./ADMINCONSULT.md"><strong>AdminConsult guide</strong></a> ·
+  <a href="./CUSTOM.md"><strong>Custom guide</strong></a> ·
+  <a href="#-two-ways-in--pick-one-before-you-write-any-code">Which one do I need?</a> ·
+  <a href="#-authentication">Authentication</a>
+</p>
+
 ### Terms used in these docs
 
 | Term | Means |
@@ -18,7 +25,9 @@ in the same office.
 
 ---
 
-## Two ways in — pick one before you write any code
+<br>
+
+## 🔀 Two ways in — pick one before you write any code
 
 They are separate APIs with different payloads, different routes and different setup steps.
 
@@ -63,7 +72,9 @@ For **everything else**: your own CRM, an in-house system, or another vendor.
 
 ---
 
-## Authentication
+<br>
+
+## 🔑 Authentication
 
 **This section applies to both APIs.** There is only one key, and the source is nothing
 more than a segment in the URL.
@@ -92,8 +103,8 @@ Go to the [Instaclause Settings Page](https://app.instaclause.be/accountant/sett
 | Custom APIs enabled but switched off | Not shown anywhere — switch the toggle on to reveal it |
 
 **Step-by-step, with screenshots, is in the guide you need:**
-[Custom](./CUSTOM.md#getting-your-api-key) ·
-[AdminConsult](./ADMINCONSULT.md#getting-your-api-key)
+[Custom](./CUSTOM.md#-getting-your-api-key) ·
+[AdminConsult](./ADMINCONSULT.md#-getting-your-api-key)
 
 ### About the key
 
@@ -123,7 +134,9 @@ it in a URL.
 
 ---
 
-## Also true of both APIs
+<br>
+
+## 📋 Also true of both APIs
 
 - **No DELETE route.** A client pushed once cannot be removed through the API. Decide up
   front how your sync should handle clients that leave the office.
@@ -132,7 +145,9 @@ it in a URL.
 
 ---
 
-## Where to go next
+<br>
+
+## 👉 Where to go next
 
 | I want to… | Read |
 |---|---|
