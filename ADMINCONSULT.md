@@ -18,9 +18,19 @@ stored in a separate collection that is **isolated per office**, and they do not
 with manually added CRM data or with other CRM integrations (HubSpot, Adminpulse,
 FID-manager, Tess, Exact Online, etc.) that may be enabled in parallel in the same office.
 
+<p align="center">
+  <a href="#-before-you-start--turn-off-the-scheduled-pull">Before you start</a> ·
+  <a href="#-getting-your-api-key">API key</a> ·
+  <a href="#-authentication">Authentication</a> ·
+  <a href="#-routes">Routes</a> ·
+  <a href="#-faq">FAQ</a>
+</p>
+
 ---
 
-## Before you start — turn off the scheduled pull
+<br>
+
+## ⚠️ Before you start — turn off the scheduled pull
 
 Instaclause can also **pull** from AdminConsult on a nightly schedule. That pull writes to
 the same records as this API, matched on the same `id` — so if it stays switched on, it
@@ -51,7 +61,9 @@ Before pushing anything, the office must tick **Disable data fetching** on the
 
 ---
 
-## Getting your API key
+<br>
+
+## 🔑 Getting your API key
 
 Open the [Instaclause Settings Page](https://app.instaclause.be/accountant/settings) and go
 to **Integration Settings**. For an office using AdminConsult, the key sits under its own
@@ -79,7 +91,9 @@ If the key is not under **Credentials**, the office has Custom APIs enabled and 
 
 ---
 
-## Authentication
+<br>
+
+## 🛡️ Authentication
 
 Include the API key in the `Authorization` header of every request, as the **raw value** —
 no `Bearer` prefix.
@@ -96,7 +110,9 @@ is switched off for that office.
 
 ---
 
-## Routes
+<br>
+
+## 🛣️ Routes
 
 **Order matters: post the customer before its sub-resources.**
 
@@ -194,7 +210,9 @@ Forward AdminConsult's own customer object as-is. These are the fields it is rea
 
 ---
 
-## FAQ
+<br>
+
+## ❓ FAQ
 
 ### Does each office get its own API key?
 Yes. Each office has its own unique API key, which identifies the office and authenticates the request. This is what keeps offices apart when one application uploads on behalf of several of them.
@@ -212,4 +230,4 @@ Yes. Posting to `/customers` overwrites the customer data, which means all addre
 No. There is no DELETE route, so a client pushed once cannot be removed through the API — it stays available in the party picker. Decide up front how your sync should handle clients that leave the office.
 
 ### Our sync returns 201 but nothing shows up in Instaclause.
-Two known causes: the source segment in the URL was not lowercase `adminconsult`, or addresses / links were posted for a customer that did not exist yet. See the notes under [Authentication](#authentication) and [Routes](#routes).
+Two known causes: the source segment in the URL was not lowercase `adminconsult`, or addresses / links were posted for a customer that did not exist yet. See the notes under [Authentication](#-authentication) and [Routes](#-routes).
