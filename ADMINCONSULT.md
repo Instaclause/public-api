@@ -188,16 +188,87 @@ Forward AdminConsult's own customer object as-is. These are the fields it is rea
 }
 ```
 
+Instaclause reads only a few of these fields. `CustomerId` is required: it becomes the customer's id and is the id you use in the other two routes.
+
+| Field | Used for |
+| --- | --- |
+| `CustomerId` | The customer's id (required) |
+| `IsCompany` | Company or person |
+| `Name`, `Firstname` | Company name, or the person's last and first name |
+| `Title` | Company type (e.g. `BV`, `NV`, `CommV`, `VOF`, `V.Z.W.`, `CMP_BE_015`). Unknown values leave it empty |
+| `RegistrationNr` | Business number |
+| `RPR` | The company's RPR (rechtspersonenregister) |
+| `Email` | Email address |
+| `SocialSecurityNumber`, `PlaceOfBirth`, `DateOfBirth` | Person only |
+
+#### Example: a company
+
+```json
+{
+  "CustomerId": 1001,
+  "IsCompany": true,
+  "Name": "Acme BV",
+  "Title": "BV",
+  "RegistrationNr": "0123456789",
+  "RPR": "Brussel",
+  "Email": "info@acme.be"
+}
+```
+
+#### Example: a person
+
+```json
+{
+  "CustomerId": 2001,
+  "IsCompany": false,
+  "Firstname": "Jan",
+  "Name": "Peeters",
+  "SocialSecurityNumber": "85.01.01-123.45",
+  "PlaceOfBirth": "Gent",
+  "DateOfBirth": "1985-01-01",
+  "Email": "jan@example.be"
+}
+```
+
 ### /customers/{customerId}/addresses
+
+Adds the address of a customer. Instaclause uses one address per customer: the one with `RegisteredOffice: true`, otherwise the first in the list.
 
 - Method: POST
 - Endpoint: /customers/{customerId}/addresses
 - Headers:
   - Authorization: [API Key]
-- Body: the object returned from AdminConsult API /customers/{customerid}/addresses
+- Body: the **list** of addresses returned from AdminConsult API /customers/{customerid}/addresses. A single object, not in a list, is ignored (the call still returns `201`).
 - Response
   - Success Status Code: 201 Created
-  
+
+Fields that are read:
+
+| Field | Meaning |
+| --- | --- |
+| `Street1` | Street. May include the number ("Kerkstraat 12 bus 3") |
+| `HouseNr` | Number, used when `Street1` has no number |
+| `HouseBox` | Box, used when `Street1` has no box |
+| `ZipCode`, `City` | Postal code and city |
+| `RegisteredOffice` | `true` marks the address to use |
+
+Example for customer 1001:
+
+`POST /customers/1001/addresses`
+
+```json
+[
+  {
+    "Street1": "Main Street",
+    "HouseNr": "12",
+    "HouseBox": "3",
+    "ZipCode": "1000",
+    "City": "Brussel",
+    "RegisteredOffice": true
+  }
+]
+```
+
 ### /customers/{customerId}/customerlinkcustomer
 
 Links a company to the customers related to it: its directors, shareholders and contacts. Instaclause shows them as the company's **representatives** and **shareholders**.
@@ -213,7 +284,8 @@ Links a company to the customers related to it: its directors, shareholders and 
 How the links are read:
 
 - `{customerId}` is the company. Each link's `CustomerIdFk` is the related customer, who must also be posted to `/customers`, otherwise the link is ignored.
-- `CustomerLinkTypeId` sets the role: `4` director, `6` shareholder, `8` contact. Any other code takes its AdminConsult label (e.g. `74` Lasthebber); unknown codes become "Contact".
+- `CustomerLinkTypeId` sets the role: `4` director ("Bestuurder" / "Directeur"), `6` shareholder, `8` contact. Other known codes get their own label (e.g. `74` Lasthebber); unknown codes become "Contact".
+- Each related customer appears once as a representative. If it has several links, the director link is kept.
 - A link with `StockOwned` above 0 also makes that customer a shareholder: `StockOwned` is the number of shares, `StockVotingNr` the number of votes.
 
 #### Example
