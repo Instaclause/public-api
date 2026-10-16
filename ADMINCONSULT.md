@@ -200,50 +200,31 @@ Forward AdminConsult's own customer object as-is. These are the fields it is rea
   
 ### /customers/{customerId}/customerlinkcustomer
 
-Links a customer to the **other customers it is related to**: who represents a company, who owns its shares, who is a contact. Each link is one AdminConsult `customerlinkcustomer` record. Instaclause turns the links into the company's **representatives** (directors, contacts, ...) and **shareholders**.
+Links a company to the customers related to it: its directors, shareholders and contacts. Instaclause shows them as the company's **representatives** and **shareholders**.
 
 - Method: POST
 - Endpoint: /customers/{customerId}/customerlinkcustomer
 - Headers:
   - Authorization: [API Key]
-- Body: the **full list** of links returned from AdminConsult API /customers/{customerid}/customerlinkcustomer
+- Body: the list returned from AdminConsult API /customers/{customerid}/customerlinkcustomer
 - Response
   - Success Status Code: 201 Created
 
-How a link is read:
+How the links are read:
 
-- `{customerId}` in the URL, and `CustomerIdPk` in each link, is the **company** (the customer that has the relations).
-- `CustomerIdFk` is the **related customer** (the person or company on the other side). That customer must also have been posted to `/customers`, otherwise the link is ignored.
-- `CustomerLinkTypeId` decides the role shown in Instaclause:
+- `{customerId}` is the company. Each link's `CustomerIdFk` is the related customer, who must also be posted to `/customers`, otherwise the link is ignored.
+- `CustomerLinkTypeId` sets the role: `4` director, `6` shareholder, `8` contact. Any other code takes its AdminConsult label (e.g. `74` Lasthebber); unknown codes become "Contact".
+- A link with `StockOwned` above 0 also makes that customer a shareholder: `StockOwned` is the number of shares, `StockVotingNr` the number of votes.
 
-| CustomerLinkTypeId | Role in Instaclause |
-| --- | --- |
-| 4 | Bestuurder (director) |
-| 6 | Aandeelhouder (shareholder) |
-| 8 | Contact |
-| 74 | Lasthebber |
-| 75 | Ultimate beneficiary |
-| -1 | Extern |
-| -2 | Partner |
-| -3 | Andere |
-| -4 | Kind |
-| -5 | Ouder |
-| -6 | Andere zeggenschap |
+#### Example
 
-- A link with `StockOwned` greater than 0 also makes the related customer a **shareholder**. `StockOwned` becomes the number of shares and `StockVotingNr` the number of votes.
-- If the same customer is linked more than once, one representative is kept, and a Bestuurder link (4) wins.
-
-#### Example: a company with a director who is also its only shareholder
-
-First post the company and the person to `/customers`, then post the links.
+Acme BV (`CustomerId` 1001) with Jan Peeters (`CustomerId` 2001) as director and sole shareholder. Post both to `/customers` first, then:
 
 `POST /customers/1001/customerlinkcustomer`
 
 ```json
 [
   {
-    "CustomerLinkCustomerId": 5001,
-    "CustomerIdPk": 1001,
     "CustomerIdFk": 2001,
     "CustomerLinkTypeId": 4,
     "StockOwned": 100,
@@ -252,32 +233,15 @@ First post the company and the person to `/customers`, then post the links.
 ]
 ```
 
-Here `1001` is Acme BV and `2001` is Jan Peeters. Instaclause then holds the company with this representative and shareholder:
+Instaclause then shows Acme BV with:
 
 ```json
 {
-  "id": "C-2002",
-  "type": "company",
-  "name": "Acme BV",
-  "companyType": "BV",
   "relations": [
-    {
-      "type": "person",
-      "id": "P-1001",
-      "firstName": "Jan",
-      "lastName": "Peeters",
-      "function": "Bestuurder"
-    }
+    { "id": "2001", "firstName": "Jan", "lastName": "Peeters", "function": "Bestuurder" }
   ],
   "shareholders": [
-    {
-      "type": "person",
-      "id": "P-1001",
-      "firstName": "Jan",
-      "lastName": "Peeters",
-      "numberOfShares": "100",
-      "numberOfVotes": "100"
-    }
+    { "id": "2001", "firstName": "Jan", "lastName": "Peeters", "numberOfShares": "100", "numberOfVotes": "100" }
   ]
 }
 ```
