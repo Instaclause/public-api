@@ -200,13 +200,51 @@ Forward AdminConsult's own customer object as-is. These are the fields it is rea
   
 ### /customers/{customerId}/customerlinkcustomer
 
+Links a company to the customers related to it: its directors, shareholders and contacts. Instaclause shows them as the company's **representatives** and **shareholders**.
+
 - Method: POST
 - Endpoint: /customers/{customerId}/customerlinkcustomer
 - Headers:
   - Authorization: [API Key]
-- Body: the object returned from AdminConsult API /customers/{customerid}/customerlinkcustomer
+- Body: the list returned from AdminConsult API /customers/{customerid}/customerlinkcustomer
 - Response
   - Success Status Code: 201 Created
+
+How the links are read:
+
+- `{customerId}` is the company. Each link's `CustomerIdFk` is the related customer, who must also be posted to `/customers`, otherwise the link is ignored.
+- `CustomerLinkTypeId` sets the role: `4` director, `6` shareholder, `8` contact. Any other code takes its AdminConsult label (e.g. `74` Lasthebber); unknown codes become "Contact".
+- A link with `StockOwned` above 0 also makes that customer a shareholder: `StockOwned` is the number of shares, `StockVotingNr` the number of votes.
+
+#### Example
+
+Acme BV (`CustomerId` 1001) with Jan Peeters (`CustomerId` 2001) as director and sole shareholder. Post both to `/customers` first, then:
+
+`POST /customers/1001/customerlinkcustomer`
+
+```json
+[
+  {
+    "CustomerIdFk": 2001,
+    "CustomerLinkTypeId": 4,
+    "StockOwned": 100,
+    "StockVotingNr": 100
+  }
+]
+```
+
+Instaclause then shows Acme BV with:
+
+```json
+{
+  "relations": [
+    { "id": "2001", "firstName": "Jan", "lastName": "Peeters", "function": "Bestuurder" }
+  ],
+  "shareholders": [
+    { "id": "2001", "firstName": "Jan", "lastName": "Peeters", "numberOfShares": "100", "numberOfVotes": "100" }
+  ]
+}
+```
 
 ---
 
