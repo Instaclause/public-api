@@ -197,7 +197,7 @@ Instaclause reads only a few of these fields. `CustomerId` is required: it becom
 | `Name`, `Firstname` | Company name, or the person's last and first name |
 | `Title` | Company type (e.g. `BV`, `NV`, `V.Z.W.`, `CMP_BE_015`). Unknown values leave it empty |
 | `RegistrationNr` | Business number |
-| `RPR` | Jurisdiction of a company |
+| `RPR` | The company's RPR (rechtspersonenregister) |
 | `Email` | Email address |
 | `SocialSecurityNumber`, `PlaceOfBirth`, `DateOfBirth` | Person only |
 
@@ -238,7 +238,7 @@ Adds the address of a customer. Instaclause uses one address per customer: the o
 - Endpoint: /customers/{customerId}/addresses
 - Headers:
   - Authorization: [API Key]
-- Body: the **list** of addresses returned from AdminConsult API /customers/{customerid}/addresses. A single object, not in a list, is ignored.
+- Body: the **list** of addresses returned from AdminConsult API /customers/{customerid}/addresses. A single object, not in a list, is ignored (the call still returns `201`).
 - Response
   - Success Status Code: 201 Created
 
@@ -247,7 +247,8 @@ Fields that are read:
 | Field | Meaning |
 | --- | --- |
 | `Street1` | Street. May include the number ("Kerkstraat 12 bus 3") |
-| `HouseNr`, `HouseBox` | Number and box, used when `Street1` has no number |
+| `HouseNr` | Number, used when `Street1` has no number |
+| `HouseBox` | Box, used when `Street1` has no box |
 | `ZipCode`, `City` | Postal code and city |
 | `RegisteredOffice` | `true` marks the address to use |
 
