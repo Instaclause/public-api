@@ -284,7 +284,8 @@ Links a company to the customers related to it: its directors, shareholders and 
 How the links are read:
 
 - `{customerId}` is the company. Each link's `CustomerIdFk` is the related customer, who must also be posted to `/customers`, otherwise the link is ignored.
-- `CustomerLinkTypeId` sets the role: `4` director, `6` shareholder, `8` contact. Any other code takes its AdminConsult label (e.g. `74` Lasthebber); unknown codes become "Contact".
+- `CustomerLinkTypeId` sets the role: `4` director ("Bestuurder" / "Directeur"), `6` shareholder, `8` contact. Other known codes get their own label (e.g. `74` Lasthebber); unknown codes become "Contact".
+- Each related customer appears once as a representative. If it has several links, the director link is kept.
 - A link with `StockOwned` above 0 also makes that customer a shareholder: `StockOwned` is the number of shares, `StockVotingNr` the number of votes.
 
 #### Example
