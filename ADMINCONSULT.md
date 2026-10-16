@@ -195,7 +195,7 @@ Instaclause reads only a few of these fields. `CustomerId` is required: it becom
 | `CustomerId` | The customer's id (required) |
 | `IsCompany` | Company or person |
 | `Name`, `Firstname` | Company name, or the person's last and first name |
-| `Title` | Company type (e.g. `BV`, `NV`, `V.Z.W.`, `CMP_BE_015`). Unknown values leave it empty |
+| `Title` | Company type (e.g. `BV`, `NV`, `CommV`, `VOF`, `V.Z.W.`, `CMP_BE_015`). Unknown values leave it empty |
 | `RegistrationNr` | Business number |
 | `RPR` | The company's RPR (rechtspersonenregister) |
 | `Email` | Email address |
